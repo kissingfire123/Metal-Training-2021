@@ -1,9 +1,8 @@
 //
 //  AppDelegate.m
-//  LearnMetal
+//  MetalTrain
 //
-//  Created by kissingfire123 on 2021/10/28.
-//  Copyright © 2021年 kissingfire123. All rights reserved.
+//  Created by kissingfire123 on 2021/10/29.
 //
 
 #import "AppDelegate.h"
@@ -13,7 +12,7 @@
 @end
 
 @implementation AppDelegate
-@synthesize window = _window;
+
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.

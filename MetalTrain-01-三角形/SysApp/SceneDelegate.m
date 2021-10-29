@@ -1,8 +1,8 @@
 //
 //  SceneDelegate.m
-//  LearnMetal01
+//  MetalTrain
 //
-//  Created by kissingfire123 on 2021/10/28.
+//  Created by kissingfire123 on 2021/10/29.
 //
 
 #import "SceneDelegate.h"
