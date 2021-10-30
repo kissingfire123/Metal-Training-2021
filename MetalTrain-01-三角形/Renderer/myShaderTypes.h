@@ -7,21 +7,17 @@
 
 #ifndef myShaderTypes_h
 #define myShaderTypes_h
-
+// 这个头文件可以在oc和metal通用
 #include <simd/simd.h>
 
-// Buffer index values shared between shader and C code to ensure Metal shader buffer inputs
-// match Metal API buffer set calls.
+// 为vertex-id保持一致,使用enum更安全不易出错
 typedef enum myVertexInputIndex
 {
     myVertexInputIndexVertices     = 0,
     myVertexInputIndexViewportSize = 1,
 } myVertexInputIndex;
 
-//  This structure defines the layout of vertices sent to the vertex
-//  shader. This header is shared between the .metal shader and C code, to guarantee that
-//  the layout of the vertex array in the C code matches the layout that the .metal
-//  vertex shader expects.
+//  顶点数据的位置,颜色信息,可在oc和metal间通用,传递顶点信息
 typedef struct
 {
     vector_float2 position;

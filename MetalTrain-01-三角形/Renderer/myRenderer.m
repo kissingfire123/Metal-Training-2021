@@ -12,25 +12,24 @@
 
 #import "myRenderer.h"
 
-// Header shared between C code here, which executes Metal API commands, and .metal files, which
-// uses these types as inputs to the shaders.
+// oc和metal通用的头文件
 #import "myShaderTypes.h"
 
-// Main class performing the rendering
+// 渲染类
 @implementation myRenderer
 {
     id<MTLDevice> _device;
 
-    // The render pipeline generated from the vertex and fragment shaders in the .metal shader file.
+    // 基于shader创建的pipelineState.
     id<MTLRenderPipelineState> _pipelineState;
 
-    // The command queue used to pass commands to the device.
+    // 渲染指令队列，保证渲染指令有序地提交到GPU
     id<MTLCommandQueue> _commandQueue;
 
-    // The current size of the view, used as an input to the vertex shader.
+    // 当前的viewSize，需传递给Shader
     vector_uint2 _viewportSize;
     
-    //
+    //顶点数据
     myVertex* _verticesData;
     NSUInteger _vertexNum;
 }
@@ -60,9 +59,9 @@
 
     _device = mtkView.device;
 
-    // Load all the shader files with a .metal file extension in the project.
+    // 该方法加载工程内就,所有metal后缀名的shader文件内容
+    //获得MTLLibrary还存在另外一种方法,shader存成文本文件,不以metal为后缀名,像openGL的shader一样读成字符串,[_device newLibraryWithSource:fileContentStr]
     id<MTLLibrary> defaultLibrary = [_device newDefaultLibrary];
-
     id<MTLFunction> vertexFunction = [defaultLibrary newFunctionWithName:@"vertexShader"];
     id<MTLFunction> fragmentFunction = [defaultLibrary newFunctionWithName:@"fragmentShader"];
 
@@ -72,14 +71,11 @@
     pipelineStateDescriptor.vertexFunction = vertexFunction;
     pipelineStateDescriptor.fragmentFunction = fragmentFunction;
     pipelineStateDescriptor.colorAttachments[0].pixelFormat = mtkView.colorPixelFormat;
-
+    // 创建图形渲染管道，耗性能操作不宜频繁调用
     _pipelineState = [_device newRenderPipelineStateWithDescriptor:pipelineStateDescriptor
                                                              error:&error];
             
-    // Pipeline State creation could fail if the pipeline descriptor isn't set up properly.
-    //  If the Metal API validation is enabled, you can find out more information about what
-    //  went wrong.  (Metal API validation is enabled by default when a debug build is run
-    //  from Xcode.)
+    // 当属性设置不合理,Pipeline State 可能会创建失败
     NSAssert(_pipelineState, @"Failed to create pipeline state: %@", error);
 
     // Create the command queue
@@ -87,7 +83,7 @@
     return self;
 }
 
-/// Called whenever view changes orientation or is resized
+/// MTKView的resize代理方法,自动调用,也可手动调用
 - (void)mtkView:(nonnull MTKView *)view drawableSizeWillChange:(CGSize)size
 {
     // Save the size of the drawable to pass to the vertex shader.
@@ -95,20 +91,20 @@
     _viewportSize.y = size.height;
 }
 
-/// Called whenever the view needs to render a frame.
+/// MTKView的draw代理方法
 - (void)drawInMTKView:(nonnull MTKView *)view
 {
-    // Create a new command buffer for each render pass to the current drawable.
+    // 每次渲染都创建一个 command buffer.
     id<MTLCommandBuffer> commandBuffer = [_commandQueue commandBuffer];
     commandBuffer.label = @"MyCommand";
 
-    // Obtain a renderPassDescriptor generated from the view's drawable textures.
+    // renderPassDescriptor 描述渲染管线状态
     MTLRenderPassDescriptor *renderPassDescriptor = view.currentRenderPassDescriptor;
-    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.5, 0.3, 0.4, 1.0); // set background color
+    renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.3, 0.6, 0.4, 1.0); // 设置背景色
 
     if(renderPassDescriptor != nil)
     {
-        // Create a render command encoder.
+        // 创建 render command encoder.
         id<MTLRenderCommandEncoder> renderEncoder =
         [commandBuffer renderCommandEncoderWithDescriptor:renderPassDescriptor];
         renderEncoder.label = @"MyRenderEncoder";
@@ -118,7 +114,7 @@
         
         [renderEncoder setRenderPipelineState:_pipelineState];
 
-        // Pass in the parameter data.
+        // 传递顶点等数据
         [renderEncoder setVertexBytes:_verticesData
                                length:sizeof(myVertex)*_vertexNum
                               atIndex:myVertexInputIndexVertices];
@@ -127,10 +123,10 @@
                                length:sizeof(_viewportSize)
                               atIndex:myVertexInputIndexViewportSize];
 
-        // Draw the triangle.
+        // 图元绘制
         [renderEncoder drawPrimitives:MTLPrimitiveTypeTriangle
                           vertexStart:0
-                          vertexCount:3];
+                          vertexCount:_vertexNum];
 
         [renderEncoder endEncoding];
 
